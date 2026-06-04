@@ -20,8 +20,26 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
       window.location.href = '/auth/login';
     }
+
+    // Если HR не привязан к предприятию — разлогиниваем
+    if (error.response?.status === 403 && error.response?.data?.error?.includes('Enterprise ID missing')) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      window.location.href = '/auth/login';
+    }
+
+    // Любая внутренняя ошибка (500) на enterprise-маршрутах — разлогиниваем
+    if (error.response?.status === 500) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      window.location.href = '/auth/login';
+    }
+
     return Promise.reject(error);
   }
 );
@@ -84,6 +102,7 @@ export const applicationsAPI = {
   create: (vacancyId, type, coverNote) =>
     api.post('/applications', { vacancyId, type, coverNote }),
   getMyApplications: () => api.get('/applications/me'),
+  delete: (id) => api.delete(`/applications/${id}`),
 };
 
 // ===== ENTERPRISE PRIVATE API (HR) =====
@@ -122,6 +141,15 @@ export const messagesAPI = {
   getMessages: (threadId, page = 1, limit = 20) => api.get(`/messages/threads/${threadId}/messages`, { params: { page, limit } }),
   sendMessage: (threadId, content) => api.post(`/messages/threads/${threadId}/messages`, { content }),
   markAsRead: (threadId, msgId) => api.patch(`/messages/threads/${threadId}/messages/${msgId}/read`),
+};
+
+// Admin API
+export const adminAPI = {
+  getUsers: () => api.get('/admin/users'),
+  updateUserStatus: (id, status) => api.patch(`/admin/users/${id}/status`, { status }),
+  updateUserRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
+  getEnterprisesForModeration: () => api.get('/admin/enterprises/moderation'),
+  moderateEnterprise: (id, status) => api.patch(`/admin/enterprises/${id}/moderate`, { moderationStatus: status }),
 };
 
 export default api;

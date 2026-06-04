@@ -164,7 +164,7 @@ export default function ToursPage() {
                   )}
                   <Link
                     to={`/enterprise/${tour.Enterprise?.slug}`}
-                    className="btn-secondary"
+                    className="btn btn-secondary"
                   >
                     О предприятии
                   </Link>

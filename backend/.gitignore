@@ -10,7 +10,7 @@ yarn-error.log*
 .env.*.local
 
 # Database
-
+database.sqlite
 *.sqlite3
 *.db
 

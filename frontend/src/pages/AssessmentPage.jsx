@@ -135,7 +135,7 @@ export default function AssessmentPage() {
                 className={`flex items-center border-2 cursor-pointer hover:border-accent transition ${
                   isSelected ? 'border-accent bg-blue-50' : 'border-gray-300'
                 }`}
-                style={{ padding: '1.25rem', borderRadius: '12px' }}
+                style={{ padding: '1.25rem', borderRadius: '12px', gap: '0.5rem' }}
               >
                 <input
                   type="radio"
@@ -148,15 +148,14 @@ export default function AssessmentPage() {
                       setFreeTextValues(prev => ({ ...prev, [currentQuestion.code]: '' }));
                     }
                   }}
-                  className="mr-4"
-                  style={{ width: '20px', height: '20px', flexShrink: 0 }}
+                  style={{ width: '20px', height: '20px', flexShrink: 0, marginRight: '16px' }}
                 />
                 <span style={{ fontSize: '1.125rem' }}>{opt.label}</span>
               </label>
               {showFreeText && (
                 <input
                   type="text"
-                  className="form-control mt-2"
+                  className="form-control mt-3"
                   placeholder="Уточните..."
                   value={freeTextValues[currentQuestion.code] || ''}
                   onChange={(e) => {
@@ -210,15 +209,14 @@ export default function AssessmentPage() {
                       setFreeTextValues(prev => ({ ...prev, [`${currentQuestion.code}_${opt.value}`]: '' }));
                     }
                   }}
-                  className="mr-4"
-                  style={{ width: '20px', height: '20px', flexShrink: 0 }}
+                  style={{ width: '20px', height: '20px', flexShrink: 0, marginRight: '16px' }}
                 />
                 <span style={{ fontSize: '1.125rem' }}>{opt.label}</span>
               </label>
               {showFreeText && (
                 <input
                   type="text"
-                  className="form-control mt-2"
+                  className="form-control mt-3"
                   placeholder="Уточните..."
                   value={
                     (() => {
@@ -297,7 +295,7 @@ export default function AssessmentPage() {
               <button
                 onClick={handleCompleteAssessment}
                 disabled={isLoading}
-                className="flex-1 btn-primary py-4 px-6 text-lg font-semibold rounded-xl flex items-center justify-center gap-3"
+                className="flex-1 btn-primary"
               >
                 {isLoading ? (
                   <>
@@ -315,7 +313,7 @@ export default function AssessmentPage() {
                   if (canGoNext()) nextQuestion();
                 }}
                 disabled={!canGoNext() || isLoading}
-                className="flex-1 btn-primary disabled:opacity-50 py-4 px-6 text-lg font-semibold rounded-xl"
+                className="flex-1 btn-primary disabled:opacity-50"
               >
                 Далее →
               </button>

@@ -27,4 +27,18 @@ router.post('/assessment-questions/reorder', adminController.reorderAssessmentQu
 router.get('/llm-log', adminController.getLlmLogs);
 router.delete('/llm-log', adminController.clearLlmLogs);
 
+// Users management
+router.get('/users', adminController.getUsers);
+router.patch('/users/:id/status', adminController.updateUserStatus);
+router.patch('/users/:id/role', adminController.updateUserRole);
+
+// Enterprise moderation
+router.get('/enterprises/moderation', adminController.getEnterprisesForModeration);
+router.patch('/enterprises/:id/moderate', adminController.moderateEnterprise);
+
+// HR management
+router.get('/hr', adminController.getHrUsers);
+router.post('/hr/assign', adminController.assignHrToEnterprise);
+router.delete('/hr/:userId', adminController.removeHrFromEnterprise);
+
 module.exports = router;

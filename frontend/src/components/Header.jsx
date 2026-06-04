@@ -101,11 +101,17 @@ export default function Header() {
                     <FiSettings size={14} className="mr-1" /> Админ-панель
                   </Link>
                 )}
-                {user?.role !== 'superadmin' && (
+                {(user?.role === 'seeker' || user?.role === 'student') && (
                   <Link to="/dashboard" className="user-badge" onClick={() => setMenuOpen(false)}>
                     <FiUser size={16} />
                     <span className="user-email">{user?.email}</span>
                   </Link>
+                )}
+                {user?.role === 'enterprise_user' && (
+                  <span className="user-badge" onClick={() => setMenuOpen(false)}>
+                    <FiUser size={16} />
+                    <span className="user-email">{user?.email}</span>
+                  </span>
                 )}
                 <button onClick={handleLogout} className="logout-btn">
                   <FiLogOut size={16} />

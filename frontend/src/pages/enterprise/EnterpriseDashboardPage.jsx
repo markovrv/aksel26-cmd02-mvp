@@ -30,10 +30,11 @@ export default function EnterpriseDashboardPage() {
 
   const cards = [
     { to: '/enterprise/profile', icon: <FiSettings />, title: 'Профиль предприятия', desc: 'Редактировать описание, условия труда' },
+    { to: '/enterprise/my-profile', icon: <FiSettings />, title: 'Мой профиль', desc: 'Редактировать ФИО, телефон, город' },
     { to: '/enterprise/vacancies', icon: <FiBriefcase />, title: 'Вакансии', desc: 'Управление вакансиями' },
     { to: '/enterprise/applications', icon: <FiFileText />, title: 'Отклики', desc: 'Просмотр и обработка откликов' },
     { to: '/enterprise/tours', icon: <FiCalendar />, title: 'Экскурсии', desc: 'Организация экскурсий' },
-    { to: '/enterprise/tour-bookings', icon: <FiUsers />, title: 'Бронирования экскурсий', desc: 'Просмотр и управление записями' }
+    { to: '/enterprise/tour-bookings', icon: <FiUsers />, title: 'Бронирования экскурсий', desc: 'Просмотр и управление записями' },
   ];
 
   return (
@@ -42,7 +43,7 @@ export default function EnterpriseDashboardPage() {
         <h1 className="text-4xl font-bold mb-8">Панель предприятия</h1>
 
         {/* Статистика */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-gray-500 text-sm">Вакансий</p>
             <p className="text-3xl font-bold text-blue-600">{stats.vacanciesCount}</p>
@@ -56,6 +57,8 @@ export default function EnterpriseDashboardPage() {
             <p className="text-3xl font-bold text-purple-600">{stats.toursCount}</p>
           </div>
         </div>
+
+        <div style={{ height: '48px' }}></div>
 
         {/* Воронка конверсии */}
         {hasFunnel && (

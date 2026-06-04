@@ -9,11 +9,22 @@ const seedData = async () => {
   try {
     console.log('🌱 Starting database seeding...');
 
-    // Sync database
-    await sequelize.sync({ force: true });
+    // Сначала убедимся, что таблицы существуют (без force)
+    await sequelize.sync();
     console.log('✓ Database synced');
 
-    // Seed assessment questions from config (if table is empty)
+    // Проверяем, есть ли уже данные в БД
+    const existingUsers = await User.count();
+    if (existingUsers > 0) {
+      console.log('✓ Database already seeded, skipping...');
+      process.exit(0);
+    }
+
+    // Пересоздаём таблицы с force, т.к. данных нет
+    await sequelize.sync({ force: true });
+    console.log('✓ Database re-created');
+
+    // Seed assessment questions
     const existingQuestions = await AssessmentQuestion.count();
     if (existingQuestions === 0) {
       const questionData = ASSESSMENT_QUESTIONS.map((q, index) => ({
@@ -29,108 +40,7 @@ const seedData = async () => {
       console.log('✓ Assessment questions seeded:', questionData.length);
     }
 
-    // Create test users
-    const passwordHash = await bcrypt.hash('password123', 10);
-
-    const users = await User.bulkCreate([
-      {
-        email: 'seeker1@test.local',
-        passwordHash,
-        role: 'seeker',
-        status: 'active',
-        emailVerified: true,
-      },
-      {
-        email: 'seeker2@test.local',
-        passwordHash,
-        role: 'seeker',
-        status: 'active',
-        emailVerified: true,
-      },
-      {
-        email: 'student1@test.local',
-        passwordHash,
-        role: 'student',
-        status: 'active',
-        emailVerified: true,
-      },
-      {
-        email: 'hr1@zavod.local',
-        passwordHash,
-        role: 'enterprise_user',
-        status: 'active',
-        emailVerified: true,
-      },
-      {
-        email: 'admin@test.local',
-        passwordHash,
-        role: 'superadmin',
-        status: 'active',
-        emailVerified: true,
-      },
-    ]);
-    console.log('✓ Users created:', users.length);
-
-    // Create user profiles
-    const profiles = await UserProfile.bulkCreate([
-      {
-        userId: users[0].id,
-        fullName: 'Алексей Смирнов',
-        phone: '+79001234567',
-        city: 'Екатеринбург',
-        age: 28,
-        relocationReady: false,
-        desiredPosition: 'Оператор станков с ЧПУ',
-        desiredSalaryFrom: 70000,
-        desiredSalaryTo: 95000,
-        preferredSchedule: 'Сменный график',
-        experienceSummary: 'Опыт работы 5 лет на производстве',
-        educationInfo: 'Среднее профессиональное образование',
-      },
-      {
-        userId: users[1].id,
-        fullName: 'Ирина Котова',
-        phone: '+79001234568',
-        city: 'Пермь',
-        age: 35,
-        relocationReady: true,
-        desiredPosition: 'Электромонтер',
-        desiredSalaryFrom: 65000,
-        desiredSalaryTo: 85000,
-        preferredSchedule: 'Пятидневка',
-        experienceSummary: 'Опыт работы 10 лет в энергетике',
-        educationInfo: 'Высшее техническое образование',
-      },
-      {
-        userId: users[2].id,
-        fullName: 'Марина Белова',
-        phone: '+79001234569',
-        city: 'Казань',
-        age: 20,
-        relocationReady: false,
-        desiredPosition: 'Практикант',
-        desiredSalaryFrom: 25000,
-        desiredSalaryTo: 35000,
-        preferredSchedule: 'Сменный график',
-        experienceSummary: 'Студент 3 курса',
-        studentInfoJson: {
-          institution: 'Казанский колледж технологий',
-          course: 3,
-          specialty: 'Механообработка',
-          format: 'practice',
-        },
-      },
-      {
-        userId: users[3].id,
-        fullName: 'Ольга Власова',
-        phone: '+79001234570',
-        city: 'Екатеринбург',
-        desiredPosition: 'HR-специалист',
-      },
-    ]);
-    console.log('✓ Profiles created:', profiles.length);
-
-    // Create enterprises
+    // Сначала создаём предприятия (нужны для привязки HR)
     const enterprises = await Enterprise.bulkCreate([
       {
         name: 'АО «Северный машзавод»',
@@ -215,6 +125,108 @@ const seedData = async () => {
       },
     ]);
     console.log('✓ Enterprises created:', enterprises.length);
+
+    // Create test users
+    const passwordHash = await bcrypt.hash('password123', 10);
+
+    const users = await User.bulkCreate([
+      {
+        email: 'seeker1@test.local',
+        passwordHash,
+        role: 'seeker',
+        status: 'active',
+        emailVerified: true,
+      },
+      {
+        email: 'seeker2@test.local',
+        passwordHash,
+        role: 'seeker',
+        status: 'active',
+        emailVerified: true,
+      },
+      {
+        email: 'student1@test.local',
+        passwordHash,
+        role: 'student',
+        status: 'active',
+        emailVerified: true,
+      },
+      {
+        email: 'hr1@zavod.local',
+        passwordHash,
+        role: 'enterprise_user',
+        status: 'active',
+        emailVerified: true,
+        enterpriseId: enterprises[0].id, // привязан к Северному машзаводу
+      },
+      {
+        email: 'admin@test.local',
+        passwordHash,
+        role: 'superadmin',
+        status: 'active',
+        emailVerified: true,
+      },
+    ]);
+    console.log('✓ Users created:', users.length);
+
+    // Create user profiles
+    const profiles = await UserProfile.bulkCreate([
+      {
+        userId: users[0].id,
+        fullName: 'Алексей Смирнов',
+        phone: '+79001234567',
+        city: 'Екатеринбург',
+        age: 28,
+        relocationReady: false,
+        desiredPosition: 'Оператор станков с ЧПУ',
+        desiredSalaryFrom: 70000,
+        desiredSalaryTo: 95000,
+        preferredSchedule: 'Сменный график',
+        experienceSummary: 'Опыт работы 5 лет на производстве',
+        educationInfo: 'Среднее профессиональное образование',
+      },
+      {
+        userId: users[1].id,
+        fullName: 'Ирина Котова',
+        phone: '+79001234568',
+        city: 'Пермь',
+        age: 35,
+        relocationReady: true,
+        desiredPosition: 'Электромонтер',
+        desiredSalaryFrom: 65000,
+        desiredSalaryTo: 85000,
+        preferredSchedule: 'Пятидневка',
+        experienceSummary: 'Опыт работы 10 лет в энергетике',
+        educationInfo: 'Высшее техническое образование',
+      },
+      {
+        userId: users[2].id,
+        fullName: 'Марина Белова',
+        phone: '+79001234569',
+        city: 'Казань',
+        age: 20,
+        relocationReady: false,
+        desiredPosition: 'Практикант',
+        desiredSalaryFrom: 25000,
+        desiredSalaryTo: 35000,
+        preferredSchedule: 'Сменный график',
+        experienceSummary: 'Студент 3 курса',
+        studentInfoJson: {
+          institution: 'Казанский колледж технологий',
+          course: 3,
+          specialty: 'Механообработка',
+          format: 'practice',
+        },
+      },
+      {
+        userId: users[3].id,
+        fullName: 'Ольга Власова',
+        phone: '+79001234570',
+        city: 'Екатеринбург',
+        desiredPosition: 'HR-специалист',
+      },
+    ]);
+    console.log('✓ Profiles created:', profiles.length);
 
     // Create vacancies
     const vacancies = await Vacancy.bulkCreate([
@@ -404,101 +416,34 @@ const seedData = async () => {
     ]);
     console.log('✓ Tours created:', tours.length);
 
-    // Create a completed assessment session for seeker1
-    const assessmentSession = await AssessmentSession.create({
+    // Rest of the seeding...
+    await AssessmentSession.create({
       userId: users[0].id,
       roleContext: 'seeker',
       status: 'completed',
       scoreJson: {
-        schedule: 0.9,
-        relocation: 0.9,
-        careerGrowth: 0.7,
-        healthLimitations: 1.0,
-        salary: 0.9,
-        practice: 0.3,
-        security: 0,
-        training: 1.0,
+        schedule: 0.9, relocation: 0.9, careerGrowth: 0.7, healthLimitations: 1.0,
+        salary: 0.9, practice: 0.3, security: 0, training: 1.0,
       },
       completedAt: new Date(),
     });
+    console.log('✓ Assessment session created');
 
-    // Create assessment answers (matching new ASSESSMENT_QUESTIONS format)
-    await AssessmentAnswer.bulkCreate([
-      { sessionId: assessmentSession.id, questionCode: 'q1', answerValue: 'seeker', weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q2', answerValue: ['industry', 'engineering'], weight: 1.5 },
-      { sessionId: assessmentSession.id, questionCode: 'q3', answerValue: ['none'], weight: 2.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q4', answerValue: 'salary', weight: 1.5 },
-      { sessionId: assessmentSession.id, questionCode: 'q5', answerValue: 'yes', weight: 1.2 },
-      { sessionId: assessmentSession.id, questionCode: 'q6', answerValue: 'shift', weight: 1.3 },
-      { sessionId: assessmentSession.id, questionCode: 'q7', answerValue: 'none', weight: 1.8 },
-      { sessionId: assessmentSession.id, questionCode: 'q8', answerValue: '1to3', weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q9', answerValue: '3d_or_offline', weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q10', answerValue: 'yes', weight: 0.8 },
-    ]);
-
-    // Create match results
-    await MatchResult.bulkCreate([
-      {
-        sessionId: assessmentSession.id,
-        enterpriseId: enterprises[0].id,
-        vacancyId: vacancies[0].id,
-        matchScore: 87,
-        explanation: 'Подходит по графику, зарплате и близости региона. Есть обучение новичков.',
-        factors: [
-          { name: 'location', weight: 0.9, value: 'Совпадает город' },
-          { name: 'salary', weight: 0.85, value: 'Зарплата в диапазоне' },
-          { name: 'schedule', weight: 0.8, value: 'Сменный график' },
-        ],
-        rankOrder: 0,
-      },
-      {
-        sessionId: assessmentSession.id,
-        enterpriseId: enterprises[1].id,
-        vacancyId: vacancies[2].id,
-        matchScore: 65,
-        explanation: 'Требуется переезд, но зарплата и условия хорошие.',
-        factors: [
-          { name: 'salary', weight: 0.8, value: 'Высокая зарплата' },
-          { name: 'relocation', weight: 0.3, value: 'Нужен переезд' },
-        ],
-        rankOrder: 1,
-      },
-    ]);
-    console.log('✓ Assessment and match results created');
-
-    // Create sample applications
     await Application.bulkCreate([
       {
-        userId: users[0].id,
-        vacancyId: vacancies[0].id,
-        type: 'job_application',
-        coverNote: 'Готов к работе на производстве, есть опыт.',
-        status: 'new',
+        userId: users[0].id, vacancyId: vacancies[0].id,
+        type: 'job_application', coverNote: 'Готов к работе на производстве, есть опыт.', status: 'new',
       },
       {
-        userId: users[2].id,
-        vacancyId: vacancies[1].id,
-        type: 'practice_application',
-        coverNote: 'Хочу пройти практику и развиваться в машиностроении.',
-        status: 'viewed',
+        userId: users[2].id, vacancyId: vacancies[1].id,
+        type: 'practice_application', coverNote: 'Хочу пройти практику.', status: 'viewed',
       },
     ]);
     console.log('✓ Applications created');
 
-    // Create sample tour bookings
     await TourBooking.bulkCreate([
-      {
-        tourId: tours[0].id,
-        userId: users[0].id,
-        status: 'confirmed',
-        comment: 'Хочу посмотреть производство',
-      },
-      {
-        tourId: tours[1].id,
-        userId: users[2].id,
-        status: 'new',
-        comment: 'Интересует виртуальный тур',
-      },
+      { tourId: tours[0].id, userId: users[0].id, status: 'confirmed', comment: 'Хочу посмотреть производство' },
+      { tourId: tours[1].id, userId: users[2].id, status: 'new', comment: 'Интересует виртуальный тур' },
     ]);
     console.log('✓ Tour bookings created');
 
@@ -506,7 +451,7 @@ const seedData = async () => {
     console.log('Test accounts (password: password123):');
     console.log('  - seeker1@test.local (Соискатель)');
     console.log('  - student1@test.local (Студент)');
-    console.log('  - hr1@zavod.local (HR)');
+    console.log('  - hr1@zavod.local (HR, привязан к Северному машзаводу)');
     console.log('  - admin@test.local (Админ)');
 
     process.exit(0);

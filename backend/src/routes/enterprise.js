@@ -33,4 +33,8 @@ router.patch('/tours/:tourId/bookings/:bookingId/status', enterpriseController.u
 router.get('/profile', enterpriseController.getEnterpriseProfile);
 router.patch('/profile', enterpriseController.updateEnterpriseProfile);
 
+// User management for HR
+router.get('/users', enterpriseController.getApplicationUsers);
+router.patch('/users/:userId/profile', enterpriseController.updateApplicationUserProfile);
+
 module.exports = router;

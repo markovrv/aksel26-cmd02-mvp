@@ -48,6 +48,17 @@ class ApplicationController {
     }
   }
 
+  async delete(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      const result = await applicationService.delete(userId, id);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async updateStatus(req, res, next) {
     try {
       const { id } = req.params;

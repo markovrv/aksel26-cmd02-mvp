@@ -1,33 +1,16 @@
 services:
-  backend:
+  app:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    container_name: career-match-backend
+    container_name: career-match
     restart: unless-stopped
     ports:
-      - "25426:3000"     # Единственный порт: фронтенд + API
+      - "25426:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
       - JWT_SECRET=your-very-secret-key-change-this
       - JWT_EXPIRES_IN=24h
       - FRONTEND_URL=http://localhost:25426
-      # Для внешнего API рекомендаций
-      - EXTERNAL_EVAL_API_URL=https://external-service.com/api/v1
-      - EXTERNAL_EVAL_API_KEY=your-api-key
-      # Настройки SQLite – указываем путь внутри контейнера к volume
-      - DB_STORAGE=/app/data/database.sqlite
-    volumes:
-      # Монтируем папку для сохранения файла базы данных
-      - sqlite-data:/app/data
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
-
-volumes:
-  sqlite-data:
-    driver: local
+      - DB_STORAGE=/app/database.sqlite

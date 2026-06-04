@@ -4,6 +4,7 @@ import LlmConfigPage from './LlmConfigPage';
 import AssessmentAdminPage from './AssessmentAdminPage';
 import UsersPage from './UsersPage';
 import ModerationPage from './ModerationPage';
+import HrManagementPage from './HrManagementPage';
 import ProfileTab from './ProfileTab';
 import LlmLogTab from './LlmLogTab';
 
@@ -14,6 +15,7 @@ const TABS = [
   { id: 'users', label: 'Пользователи' },
   { id: 'moderation', label: 'Модерация предприятий' },
   { id: 'profile', label: 'Мой профиль' },
+  { id: 'hr', label: 'HR' },
 ];
 
 export default function AdminDashboard() {
@@ -32,6 +34,7 @@ export default function AdminDashboard() {
       case 'users': return <UsersPage />;
       case 'moderation': return <ModerationPage />;
       case 'profile': return <ProfileTab />;
+      case 'hr': return <HrManagementPage />;
       default: return <LlmConfigPage />;
     }
   };

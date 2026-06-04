@@ -90,13 +90,15 @@ export default function MyTourBookingsPage() {
             <p className="text-gray-600">Загрузка...</p>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-600 mb-4">
-              Вы пока не записались ни на одну экскурсию
-            </p>
-            <button onClick={() => navigate('/tours')} className="btn-primary">
-              Найти экскурсии
-            </button>
+          <div className="bg-white rounded-lg shadow-sm text-center">
+            <div className="p-8">
+              <p className="text-gray-600 mb-4">
+                Вы пока не записались ни на одну экскурсию
+              </p>
+              <button onClick={() => navigate('/tours')} className="btn-primary">
+                Найти экскурсии
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -167,8 +169,8 @@ export default function MyTourBookingsPage() {
                   </div>
 
                   {booking.comment && (
-                    <div className="mt-4 p-3 bg-light rounded">
-                      <p className="text-sm text-gray-600">
+                    <div className="mt-4 bg-light rounded">
+                      <p className="text-sm text-gray-600 leading-relaxed p-4">
                         <strong>Комментарий:</strong> {booking.comment}
                       </p>
                     </div>

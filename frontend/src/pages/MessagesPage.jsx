@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { messagesAPI } from '../services/api';
+import { messagesAPI, enterprisesAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 export default function MessagesPage() {
@@ -11,6 +11,10 @@ export default function MessagesPage() {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showEnterprisePicker, setShowEnterprisePicker] = useState(false);
+  const [enterprises, setEnterprises] = useState([]);
+  const [enterprisesLoading, setEnterprisesLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const messagesEndRef = useRef(null);
   const pollRef = useRef(null);
 
@@ -84,23 +88,57 @@ export default function MessagesPage() {
     }
   };
 
-  // Создание треда (для seeker/student)
-  const handleNewThread = async () => {
-    const enterpriseId = prompt('Введите ID предприятия:');
-    if (!enterpriseId) return;
+  // Открыть выбор предприятия
+  const openEnterprisePicker = async () => {
+    setShowEnterprisePicker(true);
+    setSearchTerm('');
+    setEnterprisesLoading(true);
     try {
-      await messagesAPI.createThread(enterpriseId);
+      const { data } = await enterprisesAPI.getAll();
+      setEnterprises(data.enterprises || data || []);
+    } catch (e) {
+      toast.error('Ошибка загрузки списка предприятий');
+    } finally {
+      setEnterprisesLoading(false);
+    }
+  };
+
+  // Создание треда с выбранным предприятием
+  const handleSelectEnterprise = async (enterpriseId) => {
+    setShowEnterprisePicker(false);
+    try {
+      const { data } = await messagesAPI.createThread(enterpriseId);
       toast.success('Чат создан');
-      loadThreads();
+      // Обновляем список тредов
+      const { data: threadsData } = await messagesAPI.getThreads();
+      const updatedThreads = threadsData.threads || [];
+      setThreads(updatedThreads);
+      // Находим созданный тред и открываем его
+      const newThread = updatedThreads.find(t => t.enterpriseId === enterpriseId || t.id === data.id);
+      if (newThread) {
+        openThread(newThread);
+      }
     } catch (e) {
       toast.error('Ошибка создания чата');
     }
   };
 
-  // Скролл к последнему сообщению
+  const filteredEnterprises = Array.isArray(enterprises)
+    ? enterprises.filter(e =>
+        e.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.city?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : [];
+
+  // Скролл к последнему сообщению только при добавлении нового
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (messages.length > 0) {
+      const messagesList = document.querySelector('.messages-list');
+      if (messagesList) {
+        messagesList.scrollTop = messagesList.scrollHeight;
+      }
+    }
+  }, [messages.length]);
 
   return (
     <div className="messages-page">
@@ -109,7 +147,7 @@ export default function MessagesPage() {
         <div className="messages-sidebar-header">
           <h3>Чаты</h3>
           {!isHR && (
-            <button className="btn btn-sm btn-primary" onClick={handleNewThread}>
+            <button className="btn btn-sm btn-primary" onClick={openEnterprisePicker}>
               + Новый чат
             </button>
           )}
@@ -199,6 +237,46 @@ export default function MessagesPage() {
           </>
         )}
       </div>
+
+      {/* Модальное окно выбора предприятия */}
+      {showEnterprisePicker && (
+        <div className="modal-overlay" onClick={() => setShowEnterprisePicker(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Выберите предприятие</h3>
+            <input
+              type="text"
+              className="form-control mb-4"
+              placeholder="Поиск предприятия..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              autoFocus
+            />
+            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+              {enterprisesLoading ? (
+                <p className="text-gray-500 text-center py-4">Загрузка...</p>
+              ) : filteredEnterprises.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">Предприятия не найдены</p>
+              ) : (
+                filteredEnterprises.map(ent => (
+                  <button
+                    key={ent.id}
+                    className="test-account-btn mb-2"
+                    onClick={() => handleSelectEnterprise(ent.id)}
+                  >
+                    <span className="test-account-role">{ent.name}</span>
+                    <span className="test-account-email">{ent.city || ''}</span>
+                  </button>
+                ))
+              )}
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowEnterprisePicker(false)}>
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

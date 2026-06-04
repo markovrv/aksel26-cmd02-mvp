@@ -61,7 +61,7 @@ export default function DashboardPage() {
       <div className="container mx-auto">
         <h1 className="text-4xl font-bold mb-12">Личный кабинет</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-0">
           {/* Profile Card */}
           <Link
             to="/dashboard/profile"
@@ -148,27 +148,25 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card bg-gradient-to-br from-blue-50 to-blue-100">
-            <h4 className="text-sm text-gray-600 mb-2">Мои отклики</h4>
-            <p className="text-3xl font-bold text-accent">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6" style={{ marginTop: '40px' }}>
+          <div className="rounded-2xl p-6 shadow-lg bg-gradient-to-br from-blue-600 to-blue-800">
+            <h4 className="text-sm text-white font-semibold mb-2">Мои отклики</h4>
+            <p className="text-3xl font-bold text-white">
               {applicationsCount !== null ? applicationsCount : '...'}
             </p>
-            <p className="text-xs text-gray-500 mt-2">на вакансии</p>
+            <p className="text-xs text-white/80 font-semibold mt-2">на вакансии</p>
           </div>
-
-          <div className="card bg-gradient-to-br from-green-50 to-green-100">
-            <h4 className="text-sm text-gray-600 mb-2">Записи на экскурсии</h4>
-            <p className="text-3xl font-bold text-success">
+          <div className="rounded-2xl p-6 shadow-lg bg-gradient-to-br from-green-600 to-green-800">
+            <h4 className="text-sm text-white font-semibold mb-2">Записи на экскурсии</h4>
+            <p className="text-3xl font-bold text-white">
               {tourBookingsCount !== null ? tourBookingsCount : '...'}
             </p>
-            <p className="text-xs text-gray-500 mt-2">запланировано</p>
+            <p className="text-xs text-white/80 font-semibold mt-2">запланировано</p>
           </div>
-
-          <div className="card bg-gradient-to-br from-purple-50 to-purple-100">
-            <h4 className="text-sm text-gray-600 mb-2">Рекомендации</h4>
-            <p className="text-3xl font-bold">{recommendationsCount}</p>
-            <p className="text-xs text-gray-500 mt-2">предприятий и вакансий</p>
+          <div className="rounded-2xl p-6 shadow-lg bg-gradient-to-br from-purple-600 to-purple-800">
+            <h4 className="text-sm text-white font-semibold mb-2">Рекомендации</h4>
+            <p className="text-3xl font-bold text-white">{recommendationsCount}</p>
+            <p className="text-xs text-white/80 font-semibold mt-2">предприятий и вакансий</p>
           </div>
         </div>
       </div>

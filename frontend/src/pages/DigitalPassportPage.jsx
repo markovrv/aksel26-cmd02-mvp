@@ -56,6 +56,44 @@ export default function DigitalPassportPage() {
     if (!passportRef.current) return;
     setGeneratingPdf(true);
     try {
+      const root = passportRef.current;
+
+      // 1. Скрываем аватар
+      const avatar = root.querySelector('.passport-avatar');
+      if (avatar) {
+        avatar.dataset.savedDisplay = avatar.style.display || '';
+        avatar.style.display = 'none';
+      }
+
+      // 2. Убираем отступы и фон у карточек
+      const items = root.querySelectorAll('.passport-card-item');
+      items.forEach(el => {
+        el.dataset.savedPadding = el.style.padding || '';
+        el.dataset.savedBg = el.style.background || '';
+        el.dataset.savedBorderRadius = el.style.borderRadius || '';
+        el.dataset.savedBorderBottom = el.style.borderBottom || '';
+        el.style.padding = '0.5rem 0';
+        el.style.background = 'transparent';
+        el.style.borderRadius = '0';
+        el.style.borderBottom = '1px solid #ccc';
+      });
+
+      // 3. Убираем все градиенты/цветные заливки, делаем ч/б
+      const allElements = root.querySelectorAll('*');
+      const skipReset = new Set(['.passport-card-item']);
+      allElements.forEach(el => {
+        if (el.classList.contains('btn') || el.closest('.modal-overlay')) return;
+        const bg = window.getComputedStyle(el).backgroundImage;
+        if (bg && bg !== 'none') {
+          el.dataset.savedBgImage = el.style.backgroundImage || '';
+          el.style.backgroundImage = 'none';
+        }
+        if (el.style.borderColor && el.style.borderColor !== '') {
+          el.dataset.savedBorderColor = el.style.borderColor;
+          el.style.borderColor = '#ddd';
+        }
+      });
+
       const html2pdf = (await import('html2pdf.js')).default;
       const opt = {
         margin: 0.5,
@@ -64,7 +102,34 @@ export default function DigitalPassportPage() {
         html2canvas: { scale: 2, useCORS: true },
         jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
       };
-      await html2pdf().set(opt).from(passportRef.current).save();
+      await html2pdf().set(opt).from(root).save();
+
+      // Восстанавливаем всё
+      if (avatar) {
+        avatar.style.display = avatar.dataset.savedDisplay || '';
+        delete avatar.dataset.savedDisplay;
+      }
+      items.forEach(el => {
+        el.style.padding = el.dataset.savedPadding;
+        el.style.background = el.dataset.savedBg;
+        el.style.borderRadius = el.dataset.savedBorderRadius;
+        el.style.borderBottom = el.dataset.savedBorderBottom || '';
+        delete el.dataset.savedPadding;
+        delete el.dataset.savedBg;
+        delete el.dataset.savedBorderRadius;
+        delete el.dataset.savedBorderBottom;
+      });
+      allElements.forEach(el => {
+        if (el.dataset.savedBgImage !== undefined) {
+          el.style.backgroundImage = el.dataset.savedBgImage || '';
+          delete el.dataset.savedBgImage;
+        }
+        if (el.dataset.savedBorderColor !== undefined) {
+          el.style.borderColor = el.dataset.savedBorderColor || '';
+          delete el.dataset.savedBorderColor;
+        }
+      });
+
       toast.success('PDF сохранён');
     } catch (e) {
       toast.error('Ошибка генерации PDF');
@@ -103,7 +168,7 @@ export default function DigitalPassportPage() {
         <div ref={passportRef} className="space-y-6 bg-white p-8 rounded-xl shadow-sm border">
           {/* Карточка профиля */}
           <div className="flex items-center gap-6 pb-6 border-b">
-            <div className="w-20 h-20 bg-accent rounded-full flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
+            <div className="passport-avatar w-20 h-20 bg-accent rounded-full flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
               {profile?.fullName ? profile.fullName.charAt(0).toUpperCase() : <FiUser size={32} />}
             </div>
             <div className="flex-1">
@@ -125,7 +190,7 @@ export default function DigitalPassportPage() {
             ) : (
               <div className="space-y-3">
                 {recommendations.map((rec, i) => (
-                  <div key={rec.id || i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={rec.id || i} className="passport-card-item flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div>
                       <p className="font-medium">{rec.Enterprise?.name || 'Предприятие'}</p>
                       <p className="text-sm text-gray-500">{rec.Vacancy?.title || 'Вакансия'}</p>
@@ -148,7 +213,7 @@ export default function DigitalPassportPage() {
             ) : (
               <div className="space-y-2">
                 {applications.map((app) => (
-                  <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={app.id} className="passport-card-item flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div>
                       <p className="font-medium">{app.Vacancy?.title || 'Вакансия'}</p>
                       <p className="text-xs text-gray-500">{new Date(app.createdAt).toLocaleDateString('ru-RU')}</p>
@@ -168,7 +233,7 @@ export default function DigitalPassportPage() {
             ) : (
               <div className="space-y-2">
                 {bookings.map((b) => (
-                  <div key={b.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div key={b.id} className="passport-card-item flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div>
                       <p className="font-medium">{b.Tour?.title || 'Экскурсия'}</p>
                       <p className="text-xs text-gray-500">{b.Tour?.startAt ? new Date(b.Tour.startAt).toLocaleDateString('ru-RU') : ''}</p>

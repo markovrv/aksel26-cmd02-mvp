@@ -2,13 +2,28 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applicationsAPI } from '../services/api';
 import { useAuthStore } from '../store/authStore';
-import { FiBriefcase, FiMapPin, FiClock, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { FiBriefcase, FiMapPin, FiClock, FiCheckCircle, FiXCircle, FiTrash2 } from 'react-icons/fi';
 
 export default function MyApplicationsPage() {
   const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этот отклик?')) return;
+    setDeletingId(id);
+    try {
+      await applicationsAPI.delete(id);
+      setApplications((prev) => prev.filter((app) => app.id !== id));
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      alert(error.response?.data?.error || 'Ошибка при удалении отклика');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const fetchApplications = useCallback(async () => {
     try {
@@ -54,14 +69,16 @@ export default function MyApplicationsPage() {
             <p className="text-gray-600">Загрузка...</p>
           </div>
         ) : applications.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <p className="text-gray-600 mb-4">Вы пока не откликнулись ни на одну вакансию</p>
-            <button
-              onClick={() => navigate('/vacancies')}
-              className="btn-primary"
-            >
-              Найти вакансии
-            </button>
+          <div className="bg-white rounded-lg shadow-sm text-center">
+            <div className="p-8">
+              <p className="text-gray-600 mb-4">Вы пока не откликнулись ни на одну вакансию</p>
+              <button
+                onClick={() => navigate('/vacancies')}
+                className="btn-primary"
+              >
+                Найти вакансии
+              </button>
+            </div>
           </div>
         ) : (
           <div className="space-y-4">
@@ -105,8 +122,8 @@ export default function MyApplicationsPage() {
                   </div>
 
                   {app.coverNote && (
-                    <div className="mt-4 p-3 bg-light rounded">
-                      <p className="text-sm text-gray-600">
+                    <div className="mt-4 bg-light rounded">
+                      <p className="text-sm text-gray-600 leading-relaxed p-4">
                         <strong>Сопроводительное письмо:</strong> {app.coverNote}
                       </p>
                     </div>
@@ -124,6 +141,14 @@ export default function MyApplicationsPage() {
                       className="btn-secondary btn-sm"
                     >
                       О предприятии
+                    </button>
+                    <button
+                      onClick={() => handleDelete(app.id)}
+                      disabled={deletingId === app.id}
+                      className="btn btn-danger ml-auto"
+                    >
+                      <FiTrash2 size={14} />
+                      {deletingId === app.id ? 'Удаление...' : 'Удалить'}
                     </button>
                   </div>
                 </div>

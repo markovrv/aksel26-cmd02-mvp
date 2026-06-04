@@ -1,6 +1,7 @@
-const { LlmConfig, AssessmentQuestion } = require('../models');
+const { LlmConfig, AssessmentQuestion, User, UserProfile, Enterprise } = require('../models');
 const axios = require('axios');
 const llmLogger = require('../services/llmLogger');
+const { Op } = require('sequelize');
 
 class AdminController {
   // ========== LLM Config CRUD ==========
@@ -34,7 +35,6 @@ class AdminController {
         isActive: false,
       });
 
-      // Не возвращаем токен в ответе
       const result = config.toJSON();
       delete result.apiToken;
 
@@ -103,10 +103,8 @@ class AdminController {
         return res.status(404).json({ error: 'Config not found' });
       }
 
-      // Сбросить isActive у всех
       await LlmConfig.update({ isActive: false }, { where: {} });
 
-      // Активировать выбранную
       config.isActive = true;
       await config.save();
 
@@ -160,6 +158,7 @@ class AdminController {
       });
     }
   }
+
   // ========== Assessment Questions CRUD ==========
 
   async getAssessmentQuestions(req, res, next) {
@@ -285,7 +284,7 @@ class AdminController {
 
   async reorderAssessmentQuestions(req, res, next) {
     try {
-      const { items } = req.body; // [{id, sortOrder}]
+      const { items } = req.body;
 
       if (!Array.isArray(items)) {
         return res.status(400).json({ error: 'items array required' });
@@ -303,6 +302,182 @@ class AdminController {
       });
 
       res.json(questions);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ========== Users Management ==========
+
+  async getUsers(req, res, next) {
+    try {
+      const users = await User.findAll({
+        include: [{ model: UserProfile, required: false }, { model: Enterprise, required: false }],
+        order: [['createdAt', 'DESC']],
+      });
+      res.json({ users });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateUserStatus(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!['active', 'blocked', 'pending'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status value' });
+      }
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      user.status = status;
+      await user.save();
+
+      res.json({ message: 'Status updated', user: { id: user.id, status: user.status } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateUserRole(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+
+      if (!['seeker', 'student', 'enterprise_user', 'superadmin'].includes(role)) {
+        return res.status(400).json({ error: 'Invalid role' });
+      }
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (role !== 'enterprise_user') {
+        user.enterpriseId = null;
+      }
+      user.role = role;
+      await user.save();
+
+      res.json({ message: 'Role updated', user: { id: user.id, role: user.role } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ========== Enterprise Moderation ==========
+
+  async getEnterprisesForModeration(req, res, next) {
+    try {
+      const enterprises = await Enterprise.findAll({
+        where: {
+          moderationStatus: { [Op.in]: ['pending', 'rejected', 'draft'] },
+        },
+        order: [['updatedAt', 'DESC']],
+      });
+      res.json({ enterprises });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async moderateEnterprise(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { moderationStatus } = req.body;
+
+      if (!['approved', 'rejected'].includes(moderationStatus)) {
+        return res.status(400).json({ error: 'moderationStatus must be "approved" or "rejected"' });
+      }
+
+      const enterprise = await Enterprise.findByPk(id);
+      if (!enterprise) {
+        return res.status(404).json({ error: 'Enterprise not found' });
+      }
+
+      enterprise.moderationStatus = moderationStatus;
+      await enterprise.save();
+
+      res.json({ message: `Enterprise ${moderationStatus}`, enterprise });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ========== HR Management ==========
+
+  async getHrUsers(req, res, next) {
+    try {
+      const hrUsers = await User.findAll({
+        where: { role: 'enterprise_user' },
+        include: [
+          { model: UserProfile, required: false },
+          { model: Enterprise, required: false },
+        ],
+        order: [['createdAt', 'DESC']],
+      });
+
+      const enterprises = await Enterprise.findAll({
+        order: [['name', 'ASC']],
+      });
+
+      res.json({ hrUsers, enterprises });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async assignHrToEnterprise(req, res, next) {
+    try {
+      const { userId, enterpriseId } = req.body;
+
+      if (!userId || !enterpriseId) {
+        return res.status(400).json({ error: 'userId and enterpriseId are required' });
+      }
+
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      const enterprise = await Enterprise.findByPk(enterpriseId);
+      if (!enterprise) {
+        return res.status(404).json({ error: 'Enterprise not found' });
+      }
+
+      user.role = 'enterprise_user';
+      user.enterpriseId = enterpriseId;
+      await user.save();
+
+      res.json({ message: 'HR назначен предприятию', user: { id: user.id, role: user.role, enterpriseId: user.enterpriseId } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async removeHrFromEnterprise(req, res, next) {
+    try {
+      const { userId } = req.params;
+
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      if (user.role !== 'enterprise_user') {
+        return res.status(400).json({ error: 'User is not an HR' });
+      }
+
+      user.enterpriseId = null;
+      user.role = 'seeker';
+      await user.save();
+
+      res.json({ message: 'HR снят с должности', user: { id: user.id, role: user.role, enterpriseId: user.enterpriseId } });
     } catch (error) {
       next(error);
     }

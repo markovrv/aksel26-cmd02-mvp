@@ -3,6 +3,8 @@ const vacancyService = require('../services/vacancyService');
 const applicationService = require('../services/applicationService');
 const tourService = require('../services/tourService');
 const conversionService = require('../services/conversionService');
+const profileService = require('../services/profileService');
+
 class EnterpriseController {
   async getAll(req, res, next) {
     try {
@@ -158,7 +160,6 @@ class EnterpriseController {
     } catch (error) { next(error); }
   }
 
-
   async getTour(req, res, next) {
     try {
       const { id } = req.params;
@@ -203,6 +204,33 @@ class EnterpriseController {
     }
   }
 
+  // ========== User management for HR ==========
+
+  async getApplicationUsers(req, res, next) {
+    try {
+      const enterpriseId = req.user.enterpriseId;
+      const users = await applicationService.getUsersByEnterprise(enterpriseId);
+      res.json({ users });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateApplicationUserProfile(req, res, next) {
+    try {
+      const { userId } = req.params;
+      const enterpriseId = req.user.enterpriseId;
+      // Verify this user has applied to this enterprise
+      const hasAccess = await applicationService.checkUserApplicationToEnterprise(userId, enterpriseId);
+      if (!hasAccess) {
+        return res.status(403).json({ error: 'This user has no applications to your enterprise' });
+      }
+      const profile = await profileService.updateProfile(userId, req.body);
+      res.json(profile);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new EnterpriseController();

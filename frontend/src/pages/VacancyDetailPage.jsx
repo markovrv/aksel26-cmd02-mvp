@@ -228,7 +228,7 @@ export default function VacancyDetailPage() {
               </div>
               <Link
                 to={`/enterprise/${vacancy.Enterprise?.slug}`}
-                className="btn-secondary mt-4 inline-block"
+                className="btn btn-secondary"
               >
                 Подробнее о предприятии
               </Link>
