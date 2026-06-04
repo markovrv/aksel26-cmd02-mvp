@@ -1,10 +1,12 @@
-version: '3.8'
-
 services:
   backend:
-    build: ./backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: career-match-backend
     restart: unless-stopped
+    ports:
+      - "25426:3000"     # Единственный порт: фронтенд + API
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -16,22 +18,9 @@ services:
       - EXTERNAL_EVAL_API_KEY=your-api-key
       # Настройки SQLite – указываем путь внутри контейнера к volume
       - DB_STORAGE=/app/data/database.sqlite
-      # Если Sequelice использует другие переменные для SQLite, добавьте их:
-      # - DB_DIALECT=sqlite
     volumes:
       # Монтируем папку для сохранения файла базы данных
       - sqlite-data:/app/data
-    networks:
-      - app-network
-
-  frontend:
-    build: ./frontend
-    container_name: career-match-frontend
-    restart: unless-stopped
-    ports:
-      - "25426:80"     # Доступ к приложению по http://localhost:25426
-    depends_on:
-      - backend
     networks:
       - app-network
 

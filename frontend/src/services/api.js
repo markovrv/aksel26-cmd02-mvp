@@ -115,4 +115,13 @@ export const enterpriseAPI = {
   getAllTourBookings: () => api.get('/enterprise/tours/bookings'),
 };
 
+// Messages API
+export const messagesAPI = {
+  getThreads: () => api.get('/messages/threads'),
+  createThread: (enterpriseId, vacancyId) => api.post('/messages/threads', { enterpriseId, vacancyId }),
+  getMessages: (threadId, page = 1, limit = 20) => api.get(`/messages/threads/${threadId}/messages`, { params: { page, limit } }),
+  sendMessage: (threadId, content) => api.post(`/messages/threads/${threadId}/messages`, { content }),
+  markAsRead: (threadId, msgId) => api.patch(`/messages/threads/${threadId}/messages/${msgId}/read`),
+};
+
 export default api;

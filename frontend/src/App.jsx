@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
+import HowItWorksPage from './pages/HowItWorksPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
 import AssessmentPage from './pages/AssessmentPage';
@@ -13,6 +14,8 @@ import VacanciesPage from './pages/VacanciesPage';
 import VacancyDetailPage from './pages/VacancyDetailPage';
 import ToursPage from './pages/ToursPage';
 import MyApplicationsPage from './pages/MyApplicationsPage';
+import MessagesPage from './pages/MessagesPage';
+import DigitalPassportPage from './pages/DigitalPassportPage';
 import MyTourBookingsPage from './pages/MyTourBookingsPage';
 import EnterpriseDashboardPage from './pages/enterprise/EnterpriseDashboardPage';
 import EnterpriseProfilePage from './pages/enterprise/EnterpriseProfilePage';
@@ -24,6 +27,7 @@ import EnterpriseTourFormPage from './pages/enterprise/EnterpriseTourFormPage';
 import EnterpriseTourBookingsPage from './pages/enterprise/EnterpriseTourBookingsPage';
 import EnterpriseAllTourBookingsPage from './pages/enterprise/EnterpriseAllTourBookingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import './styles/globals.css';
 import './App.css';
 
@@ -52,15 +56,7 @@ function App() {
             <Route path="/dashboard/applications" element={<MyApplicationsPage />} />
             <Route path="/dashboard/tour-bookings" element={<MyTourBookingsPage />} />
 
-            {/* Placeholder routes */}
-            <Route path="/how-it-works" element={
-              <div className="page-content">
-                <div className="page-header">
-                  <h2>Как это работает</h2>
-                  <p>Найдите своё идеальное место работы на производстве</p>
-                </div>
-              </div>
-            } />
+            <Route path="/how-it-works" element={<HowItWorksPage />} />
             <Route path="/dashboard/profile" element={
               <div className="page-content">
                 <div className="page-header">
@@ -69,14 +65,7 @@ function App() {
                 </div>
               </div>
             } />
-            <Route path="/dashboard/digital-passport" element={
-              <div className="page-content">
-                <div className="page-header">
-                  <h2>Цифровой паспорт</h2>
-                  <p>Скоро доступно</p>
-                </div>
-              </div>
-            } />
+            <Route path="/dashboard/digital-passport" element={<DigitalPassportPage />} />
             <Route path="/dashboard/messages" element={
               <div className="page-content">
                 <div className="page-header">
@@ -85,6 +74,16 @@ function App() {
                 </div>
               </div>
             } />
+            {/* Admin routes */}
+            {/* Messages */}
+            <Route element={<ProtectedRoute roles={['seeker', 'student', 'enterprise_user']} />}>
+              <Route path="/messages" element={<MessagesPage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute roles={['superadmin']} />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
+
             <Route element={<ProtectedRoute roles={['enterprise_user']} />}>
               <Route path="/enterprise/dashboard" element={<EnterpriseDashboardPage />} />
               <Route path="/enterprise/profile" element={<EnterpriseProfilePage />} />

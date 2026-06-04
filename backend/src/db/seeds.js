@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
 const sequelize = require('../config/database');
 const {
-  User, UserProfile, Enterprise, Vacancy, Tour, TourBooking, Application, AssessmentSession, AssessmentAnswer, MatchResult
+  User, UserProfile, Enterprise, Vacancy, Tour, TourBooking, Application, AssessmentSession, AssessmentAnswer, MatchResult, AssessmentQuestion
 } = require('../models');
+const { ASSESSMENT_QUESTIONS } = require('../config/assessmentQuestions');
 
 const seedData = async () => {
   try {
@@ -11,6 +12,22 @@ const seedData = async () => {
     // Sync database
     await sequelize.sync({ force: true });
     console.log('✓ Database synced');
+
+    // Seed assessment questions from config (if table is empty)
+    const existingQuestions = await AssessmentQuestion.count();
+    if (existingQuestions === 0) {
+      const questionData = ASSESSMENT_QUESTIONS.map((q, index) => ({
+        code: q.code,
+        text: q.text,
+        type: q.type,
+        weight: q.weight,
+        optionsJson: q.options || [],
+        isActive: true,
+        sortOrder: index,
+      }));
+      await AssessmentQuestion.bulkCreate(questionData);
+      console.log('✓ Assessment questions seeded:', questionData.length);
+    }
 
     // Create test users
     const passwordHash = await bcrypt.hash('password123', 10);
@@ -163,6 +180,39 @@ const seedData = async () => {
         logo: 'https://via.placeholder.com/150?text=ХПР',
         moderationStatus: 'approved',
       },
+      {
+        name: 'ФГП "Ведомственная охрана железнодорожного транспорта России"',
+        slug: 'fgp-vozhdt',
+        industry: 'Охрана / Безопасность / Железнодорожный транспорт',
+        region: 'Центральный федеральный округ',
+        city: 'Москва',
+        address: 'Россия, Москва (головной офис); филиалы по всей стране',
+        description: `Федеральное государственное предприятие, осуществляющее ведомственную охрану объектов
+железнодорожного транспорта с 1921 года. Основные виды деятельности: транспортная безопасность,
+охрана объектов инфраструктуры, сопровождение и охрана грузов, обеспечение пожарной безопасности.
+Предприятие отметило 100 лет защиты железных дорог России.`,
+        laborConditions: `Сменный график работы (29/14 дней — для отдельных категорий, 5/2 — для офисных должностей).
+Обязательное прохождение медицинского освидетельствования. Наличие формы и спецодежды.
+Работа в условиях открытого воздуха, круглосуточный режим для постовых нарядов.
+Ненормированный рабочий день для отдельных категорий. Доплата за ночные смены (22:00–06:00) — 40%.
+Льготы за стаж, надбавки за сложность и напряжённость труда.`,
+        safetyInfo: `Обязательный первичный и периодический медицинский осмотр. Допуск к огнестрельному оружию
+при наличии разрешения ОВД. Инструктажи по охране труда и пожарной безопасности.
+СИЗ (средства индивидуальной защиты) предоставляются работодателем.
+Запрет на работу при наличии противопоказаний по состоянию здоровья.`,
+        salaryCalcInfo: `Тарифные ставки устанавливаются в соответствии с разрядами ЕТС.
+Минимальная тарифная ставка (1 разряд) — от 10 602 руб./мес., максимальная (10 разряд) — 1,775 коэффициента
+к базовой ставке. Доплаты: ночные смены +40%, сверхурочные по ТК РФ,
+надбавки за стаж (5–35% в зависимости от лет работы в ведомственной охране).
+Районные коэффициенты и северные надбавки — по месту прохождения службы.`,
+        medicalExamInfo: `Обязательный предварительный медицинский осмотр при трудоустройстве.
+Периодические медосмотры согласно Приказу Минздрава. Психологическое освидетельствование.
+Противопоказания: хронические заболевания, ограничивающие несение службы с оружием,
+работу на высоте, физические нагрузки.`,
+        collectiveAgreementUrl: '/uploads/enterprises/fgp-vozhdt/docs/kollektivny-dogovor-2024-2026.pdf',
+        logo: '/uploads/enterprises/fgp-vozhdt/TransportBezop-8.jpg',
+        moderationStatus: 'approved',
+      },
     ]);
     console.log('✓ Enterprises created:', enterprises.length);
 
@@ -248,6 +298,54 @@ const seedData = async () => {
         status: 'published',
         publishedAt: new Date(),
       },
+      {
+        enterpriseId: enterprises[3].id,
+        title: 'Стрелок ВОХР',
+        department: 'Служба охраны',
+        employmentType: 'full_time',
+        salaryFrom: 27000,
+        salaryTo: 38000,
+        schedule: 'Сменный график (29/14)',
+        requirements: 'Медицинский осмотр, допуск к оружию (разрешение ОВД), отсутствие противопоказаний. Опыт не обязателен — обучение за счёт предприятия.',
+        responsibilities: 'Охрана объектов железнодорожной инфраструктуры, патрулирование территории, контроль пропускного режима, работа с оружием (при наличии допуска).',
+        benefits: 'Официальное трудоустройство, спецодежда, доплата за ночные смены (+40%), надбавки за стаж (5–35%), обучение за счёт предприятия.',
+        medicalRequirements: 'Обязательный медосмотр, психологическое освидетельствование, отсутствие хронических заболеваний, ограничивающих несение службы с оружием.',
+        isStudentAvailable: false,
+        status: 'published',
+        publishedAt: new Date(),
+      },
+      {
+        enterpriseId: enterprises[3].id,
+        title: 'Контролёр КПП',
+        department: 'Служба охраны',
+        employmentType: 'full_time',
+        salaryFrom: 21000,
+        salaryTo: 30000,
+        schedule: 'Сменный график (5/2)',
+        requirements: 'Медицинский осмотр, ответственность, внимательность. Без оружия.',
+        responsibilities: 'Контроль пропуска людей и транспорта на территорию предприятия, проверка документов, ведение журналов учёта.',
+        benefits: 'Официальное трудоустройство, спецодежда, доплата за ночные смены, надбавки за стаж.',
+        medicalRequirements: 'Обязательный медосмотр, отсутствие противопоказаний.',
+        isStudentAvailable: false,
+        status: 'published',
+        publishedAt: new Date(),
+      },
+      {
+        enterpriseId: enterprises[3].id,
+        title: 'Практикант — помощник инспектора',
+        department: 'Служба охраны',
+        employmentType: 'practice',
+        salaryFrom: 0,
+        salaryTo: 0,
+        schedule: 'Сменный график',
+        requirements: 'Студент профильного учебного заведения (юриспруденция, безопасность, железнодорожный транспорт).',
+        responsibilities: 'Помощь инспектору службы охраны, изучение документации, ознакомление с работой постов охраны, участие в патрулировании.',
+        benefits: 'Оплачиваемая практика (по договорённости), возможность трудоустройства, получение практического опыта в ведомственной охране.',
+        medicalRequirements: 'Медосмотр для допуска к объектам железнодорожного транспорта.',
+        isStudentAvailable: true,
+        status: 'published',
+        publishedAt: new Date(),
+      },
     ]);
     console.log('✓ Vacancies created:', vacancies.length);
 
@@ -293,6 +391,16 @@ const seedData = async () => {
         capacity: 30,
         status: 'open',
       },
+      {
+        enterpriseId: enterprises[3].id,
+        title: 'Экскурсия на железнодорожный пост охраны',
+        format: 'offline',
+        description: 'Знакомство с реальными условиями работы стрелка ВОХР: обход территории, работа с оборудованием, брифинг с действующим сотрудником. Маршрут: КПП → пост охраны → служебные помещения.',
+        startAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // +14 days
+        endAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+        capacity: 10,
+        status: 'open',
+      },
     ]);
     console.log('✓ Tours created:', tours.length);
 
@@ -302,24 +410,30 @@ const seedData = async () => {
       roleContext: 'seeker',
       status: 'completed',
       scoreJson: {
-        schedule: 0.8,
-        relocation: 0.3,
-        careerGrowth: 0.6,
+        schedule: 0.9,
+        relocation: 0.9,
+        careerGrowth: 0.7,
         healthLimitations: 1.0,
-        salary: 0.75,
-        practice: 0.5,
+        salary: 0.9,
+        practice: 0.3,
+        security: 0,
+        training: 1.0,
       },
       completedAt: new Date(),
     });
 
-    // Create assessment answers
+    // Create assessment answers (matching new ASSESSMENT_QUESTIONS format)
     await AssessmentAnswer.bulkCreate([
-      { sessionId: assessmentSession.id, questionCode: 'q1', answerValue: 'Сменный график', weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q2', answerValue: false, weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q3', answerValue: 3, weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q4', answerValue: [], weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q5', answerValue: { from: 70000, to: 95000 }, weight: 1.0 },
-      { sessionId: assessmentSession.id, questionCode: 'q6', answerValue: false, weight: 1.0 },
+      { sessionId: assessmentSession.id, questionCode: 'q1', answerValue: 'seeker', weight: 1.0 },
+      { sessionId: assessmentSession.id, questionCode: 'q2', answerValue: ['industry', 'engineering'], weight: 1.5 },
+      { sessionId: assessmentSession.id, questionCode: 'q3', answerValue: ['none'], weight: 2.0 },
+      { sessionId: assessmentSession.id, questionCode: 'q4', answerValue: 'salary', weight: 1.5 },
+      { sessionId: assessmentSession.id, questionCode: 'q5', answerValue: 'yes', weight: 1.2 },
+      { sessionId: assessmentSession.id, questionCode: 'q6', answerValue: 'shift', weight: 1.3 },
+      { sessionId: assessmentSession.id, questionCode: 'q7', answerValue: 'none', weight: 1.8 },
+      { sessionId: assessmentSession.id, questionCode: 'q8', answerValue: '1to3', weight: 1.0 },
+      { sessionId: assessmentSession.id, questionCode: 'q9', answerValue: '3d_or_offline', weight: 1.0 },
+      { sessionId: assessmentSession.id, questionCode: 'q10', answerValue: 'yes', weight: 0.8 },
     ]);
 
     // Create match results

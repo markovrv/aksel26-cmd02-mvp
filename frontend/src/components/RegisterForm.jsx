@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { enterprisesAPI } from '../services/api';
-import { FiMail, FiLock, FiUser, FiBriefcase } from 'react-icons/fi';
+import { FiMail, FiLock, FiUser, FiBriefcase, FiArrowRight } from 'react-icons/fi';
 
 export default function RegisterForm() {
   const [step, setStep] = useState(1);
@@ -99,11 +99,14 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
-      <h2 className="text-3xl font-bold mb-8 text-center">Создайте аккаунт</h2>
+    <div className="auth-form-card">
+      <div className="auth-form-header">
+        <h2>Создайте аккаунт</h2>
+        <p>{step === 1 ? 'Заполните данные для входа' : 'Выберите роль'}</p>
+      </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-error px-4 py-3 rounded mb-4">
+        <div className="auth-form-error">
           {error}
         </div>
       )}
@@ -111,73 +114,73 @@ export default function RegisterForm() {
       {/* Шаг 1: учетные данные */}
       {step >= 1 && (
         <form onSubmit={handleSubmit} className={step !== 1 ? 'opacity-50 pointer-events-none' : ''}>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">ФИО</label>
-            <div className="flex items-center bg-gray-100 rounded px-3">
-              <FiUser className="text-gray-400" />
+          <div className="form-group">
+            <label>ФИО</label>
+            <div className="auth-input-wrapper">
+              <FiUser className="auth-input-icon" />
               <input
                 type="text"
                 name="fullName"
                 value={formData.fullName}
                 onChange={handleChange}
                 placeholder="Иван Иванов"
-                className="flex-1 bg-gray-100 px-2 py-2 focus:outline-none"
+                className="form-control auth-input"
                 disabled={step > 1}
               />
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <div className="flex items-center bg-light rounded px-3">
-              <FiMail className="text-gray-400" />
+          <div className="form-group">
+            <label>Email</label>
+            <div className="auth-input-wrapper">
+              <FiMail className="auth-input-icon" />
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="your@email.com"
-                className="flex-1 bg-light px-2 py-2 focus:outline-none"
+                className="form-control auth-input"
                 disabled={step > 1}
               />
             </div>
           </div>
 
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Пароль</label>
-            <div className="flex items-center bg-light rounded px-3">
-              <FiLock className="text-gray-400" />
+          <div className="form-group">
+            <label>Пароль</label>
+            <div className="auth-input-wrapper">
+              <FiLock className="auth-input-icon" />
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="••••••"
-                className="flex-1 bg-light px-2 py-2 focus:outline-none"
+                className="form-control auth-input"
                 disabled={step > 1}
               />
             </div>
           </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Подтвердите пароль</label>
-            <div className="flex items-center bg-light rounded px-3">
-              <FiLock className="text-gray-400" />
+          <div className="form-group">
+            <label>Подтвердите пароль</label>
+            <div className="auth-input-wrapper">
+              <FiLock className="auth-input-icon" />
               <input
                 type="password"
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 placeholder="••••••"
-                className="flex-1 bg-light px-2 py-2 focus:outline-none"
+                className="form-control auth-input"
                 disabled={step > 1}
               />
             </div>
           </div>
 
           {step === 1 && (
-            <button type="submit" className="w-full btn-primary">
-              Продолжить
+            <button type="submit" className="btn btn-primary btn-lg auth-submit-btn">
+              Продолжить <FiArrowRight />
             </button>
           )}
         </form>
@@ -186,12 +189,10 @@ export default function RegisterForm() {
       {/* Шаг 2: выбор роли */}
       {step >= 2 && (
         <div className={step !== 2 ? 'opacity-50 pointer-events-none' : ''}>
-          <p className="text-sm text-gray-600 mb-4">Кто вы?</p>
-          <div className="space-y-3 mb-6">
+          <p className="auth-form-role-label">Кто вы?</p>
+          <div className="auth-form-role-group">
             <label
-              className={`flex items-center p-3 border-2 rounded cursor-pointer transition ${
-                formData.role === 'seeker' ? 'border-blue-600' : 'border-gray-300'
-              }`}
+              className={`auth-form-role-option ${formData.role === 'seeker' ? 'active' : ''}`}
             >
               <input
                 type="radio"
@@ -199,18 +200,15 @@ export default function RegisterForm() {
                 value="seeker"
                 checked={formData.role === 'seeker'}
                 onChange={handleChange}
-                className="mr-3"
               />
-              <span>
-                <strong>Соискатель</strong>
-                <p className="text-xs text-gray-500">Ищу работу</p>
-              </span>
+              <div className="auth-form-role-content">
+                <span className="auth-form-role-title">Соискатель</span>
+                <span className="auth-form-role-subtitle">Ищу работу</span>
+              </div>
             </label>
 
             <label
-              className={`flex items-center p-3 border-2 rounded cursor-pointer transition ${
-                formData.role === 'student' ? 'border-blue-600' : 'border-gray-300'
-              }`}
+              className={`auth-form-role-option ${formData.role === 'student' ? 'active' : ''}`}
             >
               <input
                 type="radio"
@@ -218,18 +216,15 @@ export default function RegisterForm() {
                 value="student"
                 checked={formData.role === 'student'}
                 onChange={handleChange}
-                className="mr-3"
               />
-              <span>
-                <strong>Студент</strong>
-                <p className="text-xs text-gray-500">Ищу практику/стажировку</p>
-              </span>
+              <div className="auth-form-role-content">
+                <span className="auth-form-role-title">Студент</span>
+                <span className="auth-form-role-subtitle">Ищу практику/стажировку</span>
+              </div>
             </label>
 
             <label
-              className={`flex items-center p-3 border-2 rounded cursor-pointer transition ${
-                formData.role === 'enterprise_user' ? 'border-blue-600' : 'border-gray-300'
-              }`}
+              className={`auth-form-role-option ${formData.role === 'enterprise_user' ? 'active' : ''}`}
             >
               <input
                 type="radio"
@@ -237,25 +232,22 @@ export default function RegisterForm() {
                 value="enterprise_user"
                 checked={formData.role === 'enterprise_user'}
                 onChange={handleChange}
-                className="mr-3"
               />
-              <span>
-                <strong>Представитель предприятия</strong>
-                <p className="text-xs text-gray-500">HR, менеджер по персоналу</p>
-              </span>
+              <div className="auth-form-role-content">
+                <span className="auth-form-role-title">Представитель предприятия</span>
+                <span className="auth-form-role-subtitle">HR, менеджер по персоналу</span>
+              </div>
             </label>
           </div>
 
           {formData.role === 'enterprise_user' && (
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">
-                Выберите предприятие
-              </label>
+            <div className="form-group">
+              <label>Выберите предприятие</label>
               <select
                 name="enterpriseId"
                 value={formData.enterpriseId}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-blue-600"
+                className="form-control"
                 required
               >
                 <option value="">-- Выберите --</option>
@@ -268,23 +260,22 @@ export default function RegisterForm() {
             </div>
           )}
 
-          <div className="flex gap-3">
-            <button onClick={() => setStep(1)} className="flex-1 btn-secondary">
+          <div className="auth-form-role-actions">
+            <button onClick={() => setStep(1)} className="btn btn-secondary flex-1">
               Назад
             </button>
-            <button onClick={handleSubmit} disabled={isLoading} className="flex-1 btn-primary">
-              {isLoading ? 'Регистрация...' : 'Создать аккаунт'}
+            <button onClick={handleSubmit} disabled={isLoading} className="btn btn-primary flex-1">
+              {isLoading ? 'Регистрация...' : 'Создать аккаунт'} <FiArrowRight />
             </button>
           </div>
         </div>
       )}
 
-      <p className="text-center text-gray-600 mt-6">
-        Уже есть аккаунт?{' '}
-        <Link to="/auth/login" className="text-blue-600 font-medium hover:underline">
-          Войти
+      <div className="auth-form-footer">
+        <Link to="/auth/login" className="auth-form-link">
+          Уже есть аккаунт? <span>Войти</span>
         </Link>
-      </p>
+      </div>
     </div>
   );
 }

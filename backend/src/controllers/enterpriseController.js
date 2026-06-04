@@ -2,6 +2,7 @@ const enterpriseService = require('../services/enterpriseService');
 const vacancyService = require('../services/vacancyService');
 const applicationService = require('../services/applicationService');
 const tourService = require('../services/tourService');
+const conversionService = require('../services/conversionService');
 class EnterpriseController {
   async getAll(req, res, next) {
     try {
@@ -50,7 +51,8 @@ class EnterpriseController {
       const vacanciesCount = await vacancyService.countByEnterprise(enterpriseId);
       const applicationsCount = await applicationService.countByEnterprise(enterpriseId);
       const toursCount = await tourService.countByEnterprise(enterpriseId);
-      res.json({ vacanciesCount, applicationsCount, toursCount });
+      const conversionFunnel = await conversionService.calculateFunnel(enterpriseId);
+      res.json({ vacanciesCount, applicationsCount, toursCount, conversionFunnel });
     } catch (error) { next(error); }
   }
 

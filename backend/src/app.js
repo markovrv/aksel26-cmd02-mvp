@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const env = require('./config/env');
 const errorHandler = require('./middleware/errorHandler');
+const configureStaticFiles = require('./utils/staticFiles');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -14,6 +15,8 @@ const vacancyRoutes = require('./routes/vacancies');
 const tourRoutes = require('./routes/tours');
 const applicationRoutes = require('./routes/applications');
 const enterprisePrivateRoutes = require('./routes/enterprise');
+const adminRoutes = require('./routes/admin');
+const messageRoutes = require('./routes/messages');
 
 const app = express();
 
@@ -27,6 +30,9 @@ app.use(cors({
 // Body parser
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Static files (uploads)
+configureStaticFiles(app);
 
 // Health check
 app.get('/health', (req, res) => {
@@ -45,6 +51,8 @@ app.use(`${apiPrefix}/vacancies`, vacancyRoutes);
 app.use(`${apiPrefix}/tours`, tourRoutes);
 app.use(`${apiPrefix}/applications`, applicationRoutes);
 app.use(`${apiPrefix}/enterprise`, enterprisePrivateRoutes);
+app.use(`${apiPrefix}/admin`, adminRoutes);
+app.use(`${apiPrefix}/messages`, messageRoutes);
 
 // 404 handler
 app.use((req, res) => {

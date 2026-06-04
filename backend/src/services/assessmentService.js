@@ -1,46 +1,5 @@
-const { AssessmentSession, AssessmentAnswer } = require('../models');
-
-const ASSESSMENT_QUESTIONS = [
-  {
-    code: 'q1',
-    text: 'Какой формат работы вам подходит?',
-    type: 'single_choice',
-    options: ['Сменный график', 'Пятидневка', 'Вахта', 'Не определился'],
-  },
-  {
-    code: 'q2',
-    text: 'Готовы ли вы к переезду?',
-    type: 'boolean',
-  },
-  {
-    code: 'q3',
-    text: 'Насколько важен карьерный рост?',
-    type: 'scale_1_5',
-  },
-  {
-    code: 'q4',
-    text: 'Есть ли ограничения по условиям труда?',
-    type: 'multi_choice',
-    options: ['Высокие температуры', 'Химические вещества', 'Физическая нагрузка', 'Нет ограничений'],
-  },
-  {
-    code: 'q5',
-    text: 'Какой уровень зарплаты вы ожидаете?',
-    type: 'single_choice',
-    options: [
-      'до 40 000 ₽',
-      '40 000 - 60 000 ₽',
-      '60 000 - 80 000 ₽',
-      '80 000 - 120 000 ₽',
-      'свыше 120 000 ₽'
-    ],
-  },
-  {
-    code: 'q6',
-    text: 'Интересует ли вас практика/стажировка?',
-    type: 'boolean',
-  },
-];
+const { AssessmentSession, AssessmentAnswer, AssessmentQuestion } = require('../models');
+const { ASSESSMENT_QUESTIONS } = require('../config/assessmentQuestions');
 
 class AssessmentService {
   async startAssessment(userId, roleContext = 'seeker') {
@@ -105,35 +64,111 @@ class AssessmentService {
       healthLimitations: 0,
       salary: 0,
       practice: 0,
+      security: 0,
+      training: 0,
     };
 
     answers.forEach(answer => {
       switch (answer.questionCode) {
-        case 'q1':
-          score.schedule = answer.answerValue === 'Сменный график' ? 0.8 : 0.5;
+        case 'q1': {
+          // seeker vs student
+          score.practice = answer.answerValue === 'student' ? 1.0 : 0.3;
           break;
-        case 'q2':
-          score.relocation = answer.answerValue ? 0.9 : 0.3;
+        }
+        case 'q2': {
+          // Сфера интересов (multi)
+          const values = Array.isArray(answer.answerValue) ? answer.answerValue : [answer.answerValue];
+          if (values.includes('logistics') || values.includes('security')) {
+            score.security = 0.9;
+          }
+          if (values.includes('industry') || values.includes('engineering')) {
+            score.careerGrowth = 0.7;
+          }
           break;
-        case 'q3':
-          score.careerGrowth = (answer.answerValue || 3) / 5;
+        }
+        case 'q3': {
+          // Условия труда, с которыми НЕ готов работать (multi)
+          const limitations = Array.isArray(answer.answerValue) ? answer.answerValue : [];
+          if (limitations.length === 0 || limitations.includes('none')) {
+            score.healthLimitations = 1.0;
+          } else {
+            score.healthLimitations = 0.3;
+          }
           break;
-        case 'q4':
-          score.healthLimitations = (answer.answerValue?.length || 0) > 0 ? 0.6 : 1.0;
+        }
+        case 'q4': {
+          // Что важнее всего
+          const priority = answer.answerValue;
+          if (priority === 'salary') score.salary = 0.9;
+          else if (priority === 'career') score.careerGrowth = 0.9;
+          else if (priority === 'conditions' || priority === 'stability') score.healthLimitations = 0.8;
           break;
-        case 'q5':
-          score.salary = 0.7; // Will be refined by external API
+        }
+        case 'q5': {
+          // Готовность к переезду
+          if (answer.answerValue === 'yes') score.relocation = 0.9;
+          else if (answer.answerValue === 'maybe') score.relocation = 0.5;
+          else score.relocation = 0.1;
           break;
-        case 'q6':
-          score.practice = answer.answerValue ? 1.0 : 0.5;
+        }
+        case 'q6': {
+          // График
+          const schedule = answer.answerValue;
+          if (schedule === 'shift') score.schedule = 0.9;
+          else if (schedule === 'full_day') score.schedule = 0.6;
+          else score.schedule = 0.5;
           break;
+        }
+        case 'q7': {
+          // Медицинские ограничения
+          score.healthLimitations = answer.answerValue === 'none' ? 1.0 : 0.3;
+          break;
+        }
+        case 'q8': {
+          // Опыт работы
+          if (answer.answerValue === 'none') score.practice = Math.max(score.practice, 0.5);
+          else if (answer.answerValue === 'more3') score.careerGrowth = Math.max(score.careerGrowth, 0.8);
+          break;
+        }
+        case 'q9': {
+          // 3D-тур
+          score.training = answer.answerValue !== 'text_only' ? 0.8 : 0.3;
+          break;
+        }
+        case 'q10': {
+          // Обучение/стажировка
+          score.training = answer.answerValue === 'yes' ? 1.0 : answer.answerValue === 'depends' ? 0.5 : 0.2;
+          break;
+        }
       }
     });
 
     return score;
   }
 
-  getQuestions() {
+  async getQuestions() {
+    // Пробуем загрузить вопросы из БД (активные, отсортированные по sortOrder)
+    try {
+      const dbQuestions = await AssessmentQuestion.findAll({
+        where: { isActive: true },
+        order: [['sortOrder', 'ASC'], ['createdAt', 'ASC']],
+      });
+
+      if (dbQuestions && dbQuestions.length > 0) {
+        // Преобразуем в формат, ожидаемый фронтендом
+        return dbQuestions.map(q => ({
+          code: q.code,
+          text: q.text,
+          type: q.type,
+          weight: parseFloat(q.weight),
+          options: q.optionsJson || [],
+        }));
+      }
+    } catch (err) {
+      console.warn('Failed to load questions from DB, using fallback:', err.message);
+    }
+
+    // Fallback на конфиг-файл, если БД пуста или ошибка
     return ASSESSMENT_QUESTIONS;
   }
 }

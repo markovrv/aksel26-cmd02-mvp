@@ -10,6 +10,8 @@ const TourBooking = require('./TourBooking');
 const Application = require('./Application');
 const Message = require('./Message');
 const MessageThread = require('./MessageThread');
+const LlmConfig = require('./LlmConfig');
+const AssessmentQuestion = require('./AssessmentQuestion');
 
 // Associations
 User.hasOne(UserProfile, { foreignKey: 'userId' });
@@ -79,4 +81,6 @@ module.exports = {
   Application,
   Message,
   MessageThread,
+  LlmConfig,
+  AssessmentQuestion,
 };

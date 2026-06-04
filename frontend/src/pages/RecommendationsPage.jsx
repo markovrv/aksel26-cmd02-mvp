@@ -87,8 +87,8 @@ export default function RecommendationsPage() {
         <h1 className="text-4xl font-bold mb-12">Ваши рекомендации</h1>
 
         <div className="space-y-6">
-          {recommendations.map((rec) => (
-            <div key={rec.id} className="card hover:shadow-lg transition">
+          {(recommendations || []).map((rec, index) => (
+            <div key={`rec-${rec.id || rec.enterpriseId || ''}-${rec.vacancyId || ''}-${index}`} className="card hover:shadow-lg transition">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="text-2xl font-bold">{rec.Enterprise?.name || 'Предприятие'}</h3>

@@ -86,6 +86,19 @@ export const useAssessmentStore = create((set, get) => ({
         isLoading: false,
       }));
     } catch (error) {
+      // Если сессия не найдена (404) — сбрасываем и начинаем заново
+      if (error.response?.status === 404) {
+        localStorage.removeItem('assessment_sessionId');
+        set({
+          sessionId: null,
+          answers: {},
+          status: 'idle',
+          currentQuestionIndex: 0,
+          isLoading: false,
+          error: 'Сессия устарела. Пожалуйста, начните анкету заново.',
+        });
+        return;
+      }
       set({ error: error.message, isLoading: false });
     }
   },
@@ -122,7 +135,7 @@ export const useAssessmentStore = create((set, get) => ({
 
       // Then mark as completed with recommendations
       set({
-        recommendations: data.recommendations,
+        recommendations: data?.recommendations || [],
         status: 'completed',
         isLoading: false,
         error: null,
@@ -175,8 +188,8 @@ getRecommendations: async () => {
     if (data.userId && data.userId !== currentUserId) {
       throw new Error('Рекомендации принадлежат другому пользователю');
     }
-    localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify(data.recommendations));
-    set({ recommendations: data.recommendations, isLoading: false, error: null });
+      localStorage.setItem(STORAGE_KEYS.RECOMMENDATIONS, JSON.stringify(data?.recommendations || []));
+        set({ recommendations: data?.recommendations || [], isLoading: false, error: null });
   } catch (error) {
     console.error('Failed to fetch recommendations:', error);
     const stored = localStorage.getItem(STORAGE_KEYS.RECOMMENDATIONS);

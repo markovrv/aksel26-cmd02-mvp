@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useAssessmentStore } from '../store/assessmentStore';
-import { FiEdit, FiTrendingUp, FiTarget, FiClipboard, FiCalendar } from 'react-icons/fi';
+import { FiEdit, FiTrendingUp, FiTarget, FiClipboard, FiCalendar, FiMessageSquare, FiFileText } from 'react-icons/fi';
 import { applicationsAPI, toursAPI } from '../services/api';
 
 export default function DashboardPage() {
@@ -61,7 +61,7 @@ export default function DashboardPage() {
       <div className="container mx-auto">
         <h1 className="text-4xl font-bold mb-12">Личный кабинет</h1>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {/* Profile Card */}
           <Link
             to="/dashboard/profile"
@@ -120,6 +120,30 @@ export default function DashboardPage() {
             </div>
             <h3 className="font-bold mb-2">Мои записи на экскурсии</h3>
             <p className="text-sm text-gray-600">Запланированные экскурсии</p>
+          </Link>
+
+          {/* Messages Card */}
+          <Link
+            to="/messages"
+            className="card hover:shadow-md transition transform hover:scale-105"
+          >
+            <div className="text-accent text-3xl mb-4">
+              <FiMessageSquare />
+            </div>
+            <h3 className="font-bold mb-2">Сообщения</h3>
+            <p className="text-sm text-gray-600">Чаты с предприятиями</p>
+          </Link>
+
+          {/* Digital Passport Card */}
+          <Link
+            to="/dashboard/digital-passport"
+            className="card hover:shadow-md transition transform hover:scale-105"
+          >
+            <div className="text-accent text-3xl mb-4">
+              <FiFileText />
+            </div>
+            <h3 className="font-bold mb-2">Цифровой паспорт</h3>
+            <p className="text-sm text-gray-600">Сводка профиля, скачать PDF</p>
           </Link>
         </div>
 

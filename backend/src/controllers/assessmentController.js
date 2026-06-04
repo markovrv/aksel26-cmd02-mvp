@@ -42,7 +42,7 @@ class AssessmentController {
 
   async getQuestions(req, res, next) {
     try {
-      const questions = assessmentService.getQuestions();
+      const questions = await assessmentService.getQuestions();
       res.json({ questions });
     } catch (error) {
       next(error);

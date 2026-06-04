@@ -65,4 +65,4 @@ const checkEnterpriseOwnership = (req, res, next) => {
   next();
 };
 
-module.exports = { authMiddleware, optionalAuth, requireEnterpriseRole, checkEnterpriseOwnership };
+module.exports = { authMiddleware, optionalAuth, requireEnterpriseRole, checkEnterpriseOwnership, roleCheck };
